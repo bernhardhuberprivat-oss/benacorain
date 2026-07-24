@@ -1,0 +1,21 @@
+[build]
+  publish = "."
+
+# ARPAV (Seepegel Peschiera) liefert keine CORS-Header -> über Netlify proxen
+[[redirects]]
+  from = "/api/arpav/*"
+  to = "https://www.arpa.veneto.it/api/risorse/data-meteo/xml/:splat"
+  status = 200
+  force = true
+
+# ARPA Lombardia / Socrata (Niederschlag) – Proxy vermeidet CORS- und Cache-Ärger
+[[redirects]]
+  from = "/api/lombardia/*"
+  to = "https://www.dati.lombardia.it/resource/:splat"
+  status = 200
+  force = true
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
