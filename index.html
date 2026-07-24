@@ -177,6 +177,7 @@
       <button data-ansicht="h24" class="aktiv">24 Stunden</button>
       <button data-ansicht="t7">7 Tage</button>
       <button data-ansicht="t30">30 Tage</button>
+      <button data-ansicht="t365">365 Tage</button>
     </nav>
 
     <div class="kennzahl">
@@ -201,7 +202,8 @@
 <footer class="innen">
   Regen: <a href="https://www.dati.lombardia.it" target="_blank" rel="noopener">ARPA Lombardia / Open Data Regione Lombardia</a> ·
   Seepegel: <a href="https://www.arpa.veneto.it" target="_blank" rel="noopener">ARPAV</a> (CC BY 4.0) ·
-  Ersatzquelle Regen: <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>.
+  Ersatzquelle Regen: <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> ·
+  Langjähriges Mittel Regen (365-Tage-Ansicht): <a href="https://valori-climatici-normali.isprambiente.it/" target="_blank" rel="noopener">ISPRA</a>, Normalperiode 1991–2020, Station Brescia/Ghedi.
   Alle Werte sind automatisch veröffentlicht und nicht validiert – sie können sich nachträglich noch deutlich ändern.
 </footer>
 
@@ -227,6 +229,16 @@ const CFG = {
   },
   archivSchluessel: 'benacorain.archiv.v1'
 };
+
+// Langjähriges Mittel Niederschlag (Normalperiode 1991-2020), Station Brescia/Ghedi AM (97 m).
+// Quelle: ISPRA - Valori climatici normali in Italia (SCIA), https://valori-climatici-normali.isprambiente.it/
+// Nächstgelegene vollständige WMO-Normalstation zum Westufer des Gardasees (~35 km südlich von
+// Salò); Inland-/Flughafenstation ohne Seeklima-Effekt, dient hier als bestverfügbarer Referenzwert.
+const REFERENZ_1991_2020 = {
+  1:53.1, 2:47.1, 3:53.9, 4:76.2, 5:91.1, 6:75.9,
+  7:62.0, 8:78.2, 9:96.4, 10:102.1, 11:106.7, 12:71.0
+};
+const MONATSNAMEN = ["Jän","Feb","Mrz","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
 
 const $ = s => document.querySelector(s);
 const zahl = (n,k=1) => (n===null||n===undefined||isNaN(n)) ? '–' : Number(n).toFixed(k).replace('.',',');
@@ -294,6 +306,8 @@ let pegelChart;
 
 async function ladeSeepegel(){
   try{
+    meldung('');   // vorige Fehlermeldung verwerfen, sonst bleibt sie bei einem späteren
+                    // erfolgreichen Versuch (z.B. nach kurzem Ausfall) fälschlich stehen
     const xmlText = await holen(CFG.arpav.proxy, CFG.arpav.direkt, true);
     const doc = new DOMParser().parseFromString(xmlText,'application/xml');
     const stationen = [...doc.querySelectorAll('STAZIONE')];
@@ -518,6 +532,8 @@ async function ladeRegen(){
 }
 
 function zeichneRegen(reihe, archiv){
+  if (ansicht === 't365'){ zeichneRegenJahr(archiv); return; }
+
   let labels, werte, summe, label;
 
   if (ansicht === 'h24'){
@@ -564,6 +580,105 @@ function zeichneRegen(reihe, archiv){
         x:{ticks:{maxTicksLimit:8,font:{size:10,family:'DM Mono'},color:'#4A6157'},grid:{display:false}},
         y:{beginAtZero:true,ticks:{font:{size:10,family:'DM Mono'},color:'#4A6157',callback:v=>v+' mm'},grid:{color:'#DDE3DA'}}
       }
+    }
+  });
+}
+
+/* ------------------------------------------------------------------ *
+ *  Regen – 365-Tage-Ansicht: kumulierte Jahressumme vs. langjähriges Mittel
+ *  Beruht auf dem lokalen Archiv (siehe oben), füllt sich also mit der Zeit,
+ *  je öfter die Seite erfolgreich Daten geladen hat - genau wie die 30-Tage-Ansicht.
+ * ------------------------------------------------------------------ */
+function zeichneRegenJahr(archiv){
+  const heute = new Date();
+  const jahrZahl = heute.getFullYear();
+  const doy = d => Math.round((d - new Date(d.getFullYear(),0,0)) / 86400000);
+  const maxDOY = doy(heute);
+
+  // Langjähriges Mittel: kumuliert bis Monatsende, aber nur bis heute (letzter Punkt
+  // linear interpoliert) - damit endet die Linie exakt am selben Tag wie die aktuelle
+  // Kurve und die Y-Achse skaliert sich mit den tatsächlich sichtbaren Werten mit,
+  // statt Richtung Jahresende (und damit über den sichtbaren Bereich hinaus) zu laufen.
+  const mittelAnker = [{x:1, y:0}];
+  let kumMittel = 0;
+  for (let m=1; m<=12; m++){
+    kumMittel += REFERENZ_1991_2020[m];
+    mittelAnker.push({ x: doy(new Date(jahrZahl, m, 0)), y: Math.round(kumMittel*10)/10 });
+  }
+  const mittelPunkte = [];
+  for (let i=0; i<mittelAnker.length; i++){
+    const p = mittelAnker[i];
+    if (p.x <= maxDOY){ mittelPunkte.push(p); continue; }
+    const prev = mittelAnker[i-1] || {x:1,y:0};
+    const anteil = (p.x===prev.x) ? 0 : (maxDOY - prev.x) / (p.x - prev.x);
+    mittelPunkte.push({ x: maxDOY, y: Math.round((prev.y + (p.y - prev.y) * anteil)*10)/10 });
+    break;
+  }
+
+  // Aktuell: kumulierte Tagessummen aus dem lokalen Archiv für das laufende Jahr
+  const tage = Object.entries(archiv)
+    .filter(([k]) => k.startsWith(jahrZahl+"-"))
+    .sort((a,b)=> a[0]<b[0]?-1:1);
+  const aktuellPunkte = [{x:1, y:0}];
+  let kum = 0;
+  for (const [k,mm] of tage){
+    kum += mm;
+    const [Y,M,D] = k.split("-").map(Number);
+    aktuellPunkte.push({ x: doy(new Date(Y, M-1, D)), y: Math.round(kum*10)/10 });
+  }
+  const summeAktuell = Math.round(kum*10)/10;
+
+  const monatsTicks = [];
+  for (let m=1; m<=12; m++){
+    const v = doy(new Date(jahrZahl, m-1, 1));
+    if (v <= maxDOY) monatsTicks.push({ value:v, label: MONATSNAMEN[m-1] });
+  }
+
+  $('#regenWert').innerHTML = `${zahl(summeAktuell,1)}<small> mm</small>`;
+  $('#regenLabel').textContent = `Summe seit 1. Jänner ${jahrZahl}`;
+
+  const mittelBisHeute = mittelPunkte[mittelPunkte.length-1]?.y || 0;
+  const pct = mittelBisHeute>0 ? Math.round(100*summeAktuell/mittelBisHeute) : null;
+  $('#regenStatistik').innerHTML = [
+    ['Langjähriges Mittel bis heute', `${zahl(mittelBisHeute,0)} mm`, '1991–2020, Brescia/Ghedi'],
+    pct!==null ? ['% vom Mittel', `${pct} %`, ''] : null,
+    ['Tage im Archiv', String(tage.length), `von ${maxDOY} seit Jahresbeginn`]
+  ].filter(Boolean).map(([l,w,z]) =>
+    `<div><div class="stat-wert">${w}</div><div class="stat-label">${l}${z?' · '+z:''}</div></div>`
+  ).join('');
+
+  if (regenChart) regenChart.destroy();
+  regenChart = new Chart($('#regenChart'), {
+    type:'line',
+    data:{ datasets:[
+      {
+        label:'Langjähriges Mittel (1991–2020)',
+        data: mittelPunkte,
+        borderColor:'#8A6D3B', backgroundColor:'rgba(138,109,59,.08)',
+        borderWidth:2.4, pointRadius:0, tension:.25, fill:false,
+      },
+      {
+        label:'Aktuell '+jahrZahl,
+        data: aktuellPunkte,
+        borderColor:'#1E6E96', backgroundColor:'rgba(30,110,150,.15)',
+        borderWidth:2, pointRadius:0, tension:.25, fill:true,
+      }
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'nearest', axis:'x', intersect:false },
+      scales:{
+        x:{ type:'linear', min:1, max:maxDOY,
+           afterBuildTicks:(scale)=>{ scale.ticks = monatsTicks.map(t=>({ value:t.value })); },
+           ticks:{ maxRotation:0, autoSkip:false, font:{size:10,family:'DM Mono'}, color:'#4A6157',
+             callback:(v)=>{ const t = monatsTicks.find(t=>t.value===v); return t ? t.label : ""; } },
+           grid:{display:false} },
+        y:{ beginAtZero:true, grace:'5%', ticks:{font:{size:10,family:'DM Mono'},color:'#4A6157', callback:v=>v+' mm'}, grid:{color:'#DDE3DA'} }
+      },
+      plugins:{ legend:{ display:true, labels:{ boxWidth:14, font:{ size:10 } } },
+        tooltip:{ callbacks:{
+          title:(items)=>{ if(!items.length) return ""; const d=new Date(jahrZahl,0,items[0].parsed.x); return tag(d); },
+          label:(c)=> c.dataset.label+": "+zahl(c.parsed.y,1)+" mm" } } }
     }
   });
 }
