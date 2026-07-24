@@ -223,9 +223,10 @@ const CFG = {
     messwerte: '647i-nhxk.json'
   },
   arpav: {
-    proxy:  '/api/arpav/Ultime48ore.xml',
-    direkt: 'https://www.arpa.veneto.it/api/risorse/data-meteo/xml/Ultime48ore.xml',
-    suche:  /garda|peschiera/i
+    // Eigene Netlify Function statt Redirect-Proxy: die ARPAV-Rohdatei ist mehrere MB groß
+    // (alle ~103 Stationen Venetiens) und führte über einen reinen Proxy gelegentlich zu
+    // Timeouts. Die Function liest/filtert serverseitig und liefert nur die Garda-Station.
+    url: '/.netlify/functions/seepegel-lesen'
   },
   archivSchluessel: 'benacorain.archiv.v1'
 };
@@ -308,34 +309,25 @@ async function ladeSeepegel(){
   try{
     meldung('');   // vorige Fehlermeldung verwerfen, sonst bleibt sie bei einem späteren
                     // erfolgreichen Versuch (z.B. nach kurzem Ausfall) fälschlich stehen
-    const xmlText = await holen(CFG.arpav.proxy, CFG.arpav.direkt, true);
-    const doc = new DOMParser().parseFromString(xmlText,'application/xml');
-    const stationen = [...doc.querySelectorAll('STAZIONE')];
+    const r = await fetch(CFG.arpav.url, {cache:'no-store'});
+    const daten = await r.json();
 
-    const treffer = stationen.find(s => {
-      const name = s.querySelector('NOME')?.textContent || '';
-      return CFG.arpav.suche.test(name) &&
-             [...s.querySelectorAll('SENSORE')].some(x => x.querySelector('TYPE')?.textContent === 'LIVIDRO');
-    });
-
-    if (!treffer){
-      $('#pegelQuelle').textContent = 'ARPAV: keine Garda-Station gefunden';
-      meldung('Im ARPAV-Datensatz ist derzeit keine Pegelstation mit „Garda“ oder „Peschiera“ enthalten. Der Regenteil funktioniert unabhängig davon.');
-      return;
+    if (!r.ok || daten.error){
+      if (daten.error === 'keine-garda-station-gefunden'){
+        $('#pegelQuelle').textContent = 'ARPAV: keine Garda-Station gefunden';
+        meldung('Im ARPAV-Datensatz ist derzeit keine Pegelstation mit „Garda“ oder „Peschiera“ enthalten. Der Regenteil funktioniert unabhängig davon.');
+        return;
+      }
+      throw new Error(daten.error || ('HTTP '+r.status));
     }
 
-    const name   = treffer.querySelector('NOME').textContent.trim();
-    const sensor = [...treffer.querySelectorAll('SENSORE')]
-      .find(x => x.querySelector('TYPE')?.textContent === 'LIVIDRO');
-    const einheit = sensor.querySelector('UNITNM')?.textContent.trim() || 'm';
-
-    const reihe = [...sensor.querySelectorAll('DATI')].map(d => {
-      const roh = d.querySelector('VM')?.textContent.trim();
-      const wert = (roh === '>>' || roh === '' || roh === undefined) ? null : parseFloat(roh);
-      const s = d.getAttribute('ISTANTE');           // YYYYMMDDHHMM
+    const name    = daten.name;
+    const einheit = daten.einheit || 'm';
+    const reihe = daten.werte.map(d => {
+      const s = d.istante;   // YYYYMMDDHHMM
       const zeit = new Date(+s.slice(0,4), +s.slice(4,6)-1, +s.slice(6,8), +s.slice(8,10), +s.slice(10,12));
-      return { zeit, cm: wert===null ? null : (einheit==='m' ? wert*100 : wert) };
-    }).filter(p => p.cm !== null);
+      return { zeit, cm: einheit==='m' ? d.vm*100 : d.vm };
+    });
 
     if (!reihe.length){ $('#pegelQuelle').textContent = 'ARPAV: keine gültigen Werte'; return; }
 
@@ -362,7 +354,9 @@ async function ladeSeepegel(){
 
   }catch(e){
     $('#pegelQuelle').textContent = 'ARPAV nicht erreichbar';
-    meldung('Der Seepegel konnte nicht geladen werden. Ohne den Netlify-Proxy blockiert der Browser die ARPAV-Datei (CORS) – lokal daher mit <code>netlify dev</code> starten.');
+    meldung('Der Seepegel konnte gerade nicht geladen werden (ARPAV antwortet nicht oder zu langsam). '+
+      'Ein erneuter Versuch über „Daten neu laden“ hilft meist – die Quelle liefert nicht immer zuverlässig. '+
+      'Lokal testen erfordert <code>netlify dev</code>, da die Netlify Function sonst nicht läuft.');
   }
 }
 
@@ -527,8 +521,12 @@ async function ladeRegen(){
   const archiv = Archiv.ergaenzen(tagesSummen);
 
   zeichneRegen(reihe, archiv);
-  $('#archivHinweis').textContent =
-    `Archiv im Browser: ${Object.keys(archiv).length} Tage gesichert. Die 30-Tage-Ansicht füllt sich damit auch dann, wenn die Messstelle nur kurze Zeiträume herausgibt.`;
+
+  const archivTage = Object.keys(archiv).length;
+  $('#archivHinweis').textContent = ansicht === 't365'
+    ? `Archiv im Browser: ${archivTage} Tage gesichert. Die 365-Tage-Summe zählt nur Tage, die bereits archiviert sind – `+
+      `da die Rohquellen selbst nur ~31 Tage zurückreichen, füllt sich das ganze Jahr erst über die Zeit auf, je öfter die Seite besucht wird.`
+    : `Archiv im Browser: ${archivTage} Tage gesichert. Die 30-Tage-Ansicht füllt sich damit auch dann, wenn die Messstelle nur kurze Zeiträume herausgibt.`;
 }
 
 function zeichneRegen(reihe, archiv){

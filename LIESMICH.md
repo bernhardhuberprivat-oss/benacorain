@@ -10,16 +10,23 @@ Eine einzelne HTML-Datei, ohne Build-Schritt, ohne Abhängigkeiten außer Chart.
 3. Sitename z. B. `benacorain` → `https://benacorain.netlify.app`.
 
 Lokal testen: `netlify dev` im Ordner. Ein einfacher `python3 -m http.server` reicht **nicht**,
-weil dann die Proxy-Regeln fehlen und der Seepegel am CORS-Schutz von ARPAV scheitert.
-Die Seite fällt in dem Fall beim Regen automatisch auf Open-Meteo zurück.
+weil dann weder die Netlify Function (Seepegel) noch die Proxy-Regel (Regen/Lombardia) laufen.
+Die Seite fällt beim Regen in dem Fall automatisch auf Open-Meteo zurück; der Seepegel bleibt leer.
+
+Der Seepegel läuft bewusst über eine echte Netlify Function (`seepegel-lesen.mjs`) statt über
+einen reinen `[[redirects]]`-Proxy: die ARPAV-Rohdatei enthält alle ~103 Pegelstationen Venetiens
+und ist mehrere MB groß, was über einen einfachen Proxy gelegentlich zu Timeouts führte
+("ARPAV nicht erreichbar", obwohl ARPAV selbst erreichbar war). Die Function filtert
+serverseitig auf die Garda-Station und schickt nur noch ein paar KB an den Browser.
 
 ## Datenquellen
 
 | Kachel | Quelle | Umfang |
 |---|---|---|
-| Seepegel | ARPAV, `Ultime48ore.xml` (CC BY 4.0) | letzte ~3 Tage, 10-Minuten-Werte, in Metern über dem Nullpunkt Peschiera |
+| Seepegel | ARPAV, `Ultime48ore.xml` (CC BY 4.0), server-seitig gefiltert über `netlify/functions/seepegel-lesen.mjs` | letzte ~3 Tage, 10-Minuten-Werte, in Metern über dem Nullpunkt Peschiera |
 | Regen | ARPA Lombardia über dati.lombardia.it (Socrata) | Stationen im Umkreis von 30 km um Salò |
 | Regen (Ersatz) | Open-Meteo | 31 Tage Rückblick für den Rasterpunkt Salò |
+| Regen, langjähriges Mittel (365-Tage-Ansicht) | ISPRA, Normalperiode 1991–2020, Station Brescia/Ghedi | fix im Code hinterlegte Monatswerte |
 
 Alle Werte sind unvalidierte Rohdaten und können nachträglich korrigiert werden.
 ARPAV-Zeitstempel beziehen sich ganzjährig auf die Sonnenzeit (MEZ), im Sommer also eine Stunde

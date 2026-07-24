@@ -1,12 +1,8 @@
 [build]
   publish = "."
 
-# ARPAV (Seepegel Peschiera) liefert keine CORS-Header -> über Netlify proxen
-[[redirects]]
-  from = "/api/arpav/*"
-  to = "https://www.arpa.veneto.it/api/risorse/data-meteo/xml/:splat"
-  status = 200
-  force = true
+# Seepegel (ARPAV) läuft über netlify/functions/seepegel-lesen.mjs (kein Redirect nötig,
+# Functions sind automatisch unter /.netlify/functions/<name> erreichbar).
 
 # ARPA Lombardia / Socrata (Niederschlag) – Proxy vermeidet CORS- und Cache-Ärger
 [[redirects]]
