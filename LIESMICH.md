@@ -23,7 +23,8 @@ serverseitig auf die Garda-Station und schickt nur noch ein paar KB an den Brows
 
 | Element | Quelle | Umfang |
 |---|---|---|
-| Seepegel (aktuell, Chart) | ARPAV, `Ultime48ore.xml` (CC BY 4.0), server-seitig gefiltert über `netlify/functions/seepegel-lesen.mjs` | letzte ~3 Tage, 10-Minuten-Werte, in cm über dem Nullpunkt Peschiera |
+| Seepegel (aktuell, Kurz-Chart) | ARPAV, `Ultime48ore.xml` (CC BY 4.0), server-seitig gefiltert über `netlify/functions/seepegel-lesen.mjs` | letzte ~3 Tage, 10-Minuten-Werte, in cm über dem Nullpunkt Peschiera |
+| Verlauf – letzte 4 Monate | Selbst aufgebautes Archiv (Netlify Blobs) aus denselben ARPAV-Werten, siehe unten | wächst täglich ab Einführung der Funktion, kein rückwirkender Verlauf |
 | 5-Jahres-Spanne (Min/Max-Band) | Fest im Code hinterlegte, recherchierte Werte (siehe unten) | kein Live-API vorhanden, daher statisch mit Quellenangabe |
 
 Alle Werte sind unvalidierte Rohdaten und können nachträglich korrigiert werden.
@@ -48,10 +49,11 @@ gerade nicht erreichbar, sagt sie das offen in der Kachel und im Meldungsbanner.
 
 ## Pegel-Grafik
 
-Neben der Pegellatte steht eine zweite, gleich große Grafik mit der (stilisierten) Kontur des
-Gardasees – keine amtliche Vermessung, sondern eine von Hand nachgezogene, wiedererkennbare
-Silhouette (schmaler Nordarm bei Riva, deutliche Weitung nach Süden, Halbinsel Sirmione als
-Aussparung). Dieselbe Kontur wird als App-Icon verwendet (siehe unten).
+Neben der Pegellatte steht eine zweite, gleich große Grafik mit der Kontur des Gardasees. Der
+SVG-Pfad wurde aus einer vom Nutzer bereitgestellten Kartenvorlage extrahiert (automatische
+Konturerkennung + Vereinfachung, keine amtliche Vermessung, aber deutlich näher an der echten
+Form als eine frei Hand gezeichnete Silhouette). Dieselbe Kontur wird als App-Icon verwendet
+(siehe unten).
 
 Die Pegellatte selbst zeigt:
 
@@ -60,13 +62,35 @@ Die Pegellatte selbst zeigt:
   und -Maximum (siehe oben),
 - die üblichen Marken bei 0 cm, +50 cm, +100 cm und der Warnschwelle (+135 cm).
 
+## Verlauf – letzte 4 Monate (selbst aufgebautes Archiv)
+
+ARPAV liefert öffentlich nur eine rollende ~3-Tage-Reihe (`Ultime48ore.xml`) - das ist auch
+offiziell dokumentiert (siehe „Dati ARPAV in formato XML" auf arpa.veneto.it: dort steht explizit
+nur „ultimi 3 giorni"). Eine Mehrmonats-Historie gibt es bei ARPAV nicht als abrufbare
+Schnittstelle. Andere Portale (Comunità del Garda, laghi.net) zeigen zwar Verlaufsgrafiken auf
+ihren Webseiten, sind aber JavaScript-Apps ohne einfach auslesbare Rohdaten-API, und einzelne
+Presseartikel mit Pegelwerten sind zu lückenhaft (und teils von zweifelhafter Zuverlässigkeit)
+für einen durchgehenden Chart.
+
+Statt hier ungeprüfte oder rückwirkend geschätzte Werte einzusetzen, baut BENACO sein eigenes
+Archiv auf: `netlify/functions/seepegel-lesen.mjs` trägt bei **jedem Seitenaufruf** den
+aktuellen Tageswert zusätzlich in einen Netlify-Blobs-Store (`seepegel-historie`) ein - ein
+Eintrag pro Kalendertag, beim erneuten Aufruf am selben Tag aktualisiert. `netlify/functions/
+seepegel-archiv.mjs` liest dieses Archiv nur aus (kein Schreibzugriff). Das Rolling-Window hält
+die letzten ~200 Tage vor.
+
+Konsequenz: Der Verlauf zeigt zu Beginn nur wenige Tage und füllt sich mit der Zeit - er zeigt
+aber ausschließlich echte, von dieser Seite selbst aufgezeichnete ARPAV-Messwerte, nie erfundene
+oder geschätzte. Damit ein Tag erfasst wird, muss die Seite an diesem Tag mindestens einmal
+aufgerufen werden (kein Cron-Job im Hintergrund).
+
 ## Icon & Web-App (Homescreen)
 
 `manifest.json` + `icons/icon-*.png` sorgen dafür, dass die Seite als eigenständige Web-App mit
 Titel „BENACO“ und der Gardasee-Kontur als Icon auf dem Homescreen gespeichert werden kann
-(„Zum Home-Bildschirm“ in Safari bzw. „App installieren“ in Chrome). Die Icons wurden aus
-derselben SVG-Kontur wie die Pegel-Grafik gerendert (dunkler Tinte-Hintergrund `#15332B`,
-helle Kontur), damit Icon und Seite optisch zusammengehören. Größen: 16, 32, 120, 152, 167,
+(„Zum Home-Bildschirm“ in Safari bzw. „App installieren“ in Chrome). Die Icons wurden aus derselben, aus der Nutzer-Kartenvorlage extrahierten SVG-Kontur wie die
+Pegel-Grafik gerendert (dunkler Tinte-Hintergrund `#15332B`, helle Kontur), damit Icon und
+Seite optisch zusammengehören. Größen: 16, 32, 120, 152, 167,
 180, 192, 512 px, plus eine 512-px-Maskable-Variante für Android.
 
 ## Schrauben zum Drehen
@@ -75,7 +99,8 @@ Ganz oben im `<script>` steht der Block `CFG`:
 
 - `guardiaCm` – Warnschwelle, aktuell +135 cm
 - `lattenBereich` – Skala der Pegellatte in cm (min/max der sichtbaren Achse)
-- `arpav.url` – Pfad zur Netlify Function
+- `arpav.url` – Pfad zur Netlify Function (aktueller Pegel)
+- `arpav.archivUrl` – Pfad zur Netlify Function, die das selbst aufgebaute 4-Monats-Archiv ausliest
 - `spanne5j` – Minimum/Maximum der letzten 5 Jahre plus Beschriftung (siehe „5-Jahres-Min/Max“ oben)
 
 ## Warnschwelle
