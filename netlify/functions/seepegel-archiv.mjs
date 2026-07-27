@@ -13,14 +13,27 @@
 import { getStore } from "@netlify/blobs";
 
 export default async () => {
-  const store = getStore("seepegel-historie");
-  const tage = (await store.get("tage", { type: "json" })) || [];
+  // Absichtlich robust: ein Ausfall des Archivs (z.B. Blobs vorübergehend nicht
+  // erreichbar) soll nie eine leere/kaputte Antwort ohne Body produzieren, sondern
+  // immer gültiges JSON - das Frontend zeigt dann einfach "noch keine Daten".
+  try {
+    const store = getStore("seepegel-historie");
+    const tage = (await store.get("tage", { type: "json" })) || [];
 
-  return new Response(JSON.stringify({ tage }), {
-    status: 200,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "public, max-age=1800",
-    },
-  });
+    return new Response(JSON.stringify({ tage }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": "public, max-age=1800",
+      },
+    });
+  } catch (e) {
+    return new Response(JSON.stringify({ tage: [], error: String((e && e.message) || e) }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": "no-store",
+      },
+    });
+  }
 };
