@@ -19,12 +19,6 @@ und ist mehrere MB groß, was über einen einfachen Proxy gelegentlich zu Timeou
 ("ARPAV nicht erreichbar", obwohl ARPAV selbst erreichbar war). Die Function filtert
 serverseitig auf die Garda-Station und schickt nur noch ein paar KB an den Browser.
 
-Die `package.json` mit der Abhängigkeit `@netlify/blobs` gehört zwingend mit ins Deployment
-(auch bei Git-basierten Deploys, nicht nur bei "Ordner reinziehen"): ohne sie installiert
-Netlifys Build-Schritt das Paket nicht, und `seepegel-lesen.mjs`/`seepegel-archiv.mjs` liefern
-dann eine leere Antwort ohne erkennbare Fehlermeldung ("ARPAV nicht erreichbar" im Frontend,
-obwohl ARPAV gar nicht das Problem ist).
-
 ## Datenquellen
 
 | Element | Quelle | Umfang |

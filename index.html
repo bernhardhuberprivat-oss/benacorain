@@ -74,55 +74,57 @@
   .kz-wert small{font-size:1rem;font-family:'Archivo',sans-serif;color:var(--oliva-2)}
   .chart-box{position:relative;height:230px;margin-top:.6rem}
 
-  /* Signatur: Gardasee-Kontur, Pegellatte von Peschiera und Kennzahlen nebeneinander,
-     Kontur und Latte bewusst in derselben Höhe/Breite - direkt vergleichbare Paar-Grafik. */
-  .pegel{display:grid;grid-template-columns:100px 100px 1fr;gap:1rem;align-items:stretch}
-  @media (max-width:640px){.pegel{grid-template-columns:74px 74px 1fr;gap:.6rem}}
-  @media (max-width:420px){.pegel{grid-template-columns:1fr;gap:.8rem}
-    .kontur,.latte{height:190px;width:100%;max-width:220px}}
+  /* Signatur: der Gardasee als große Kontur, die selbst als Pegelanzeige dient - die Seefläche
+     füllt sich von unten nach oben entsprechend dem aktuellen Stand (Pegellatten-Skala,
+     CFG.lattenBereich), mit eingezeichneter Linie für den aktuellen Stand und das langjährige
+     Mittel. Technik: identischer See-Pfad einmal als leeres Becken, einmal als geclipptes
+     Rechteck (per <clipPath> auf denselben Pfad), dessen Höhe/Position transitioniert wird -
+     dasselbe Prinzip wie zuvor bei der separaten Pegellatte, nur auf die Seeform selbst angewandt. */
+  .pegel{display:grid;grid-template-columns:minmax(210px,360px) 1fr;gap:1.4rem;align-items:start}
+  @media (max-width:640px){.pegel{grid-template-columns:1fr;gap:1rem}}
 
-  .kontur{position:relative;height:250px;display:flex;align-items:center;justify-content:center;
-    background:#DCE0D6;border:1px solid var(--linea);border-radius:2px;overflow:hidden}
-  .kontur svg{width:82%;height:92%}
-  .kontur-see{fill:var(--acqua-2);stroke:var(--acqua);stroke-width:6}
+  .seefuell{position:relative;aspect-ratio:660/1134;max-width:360px;margin:0 auto;
+    background:#DCE0D6;border:1px solid var(--linea);border-radius:4px;overflow:hidden}
+  @media (max-width:640px){.seefuell{max-width:230px}}
+  .seefuell svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .see-leer{fill:#CFD6C9;stroke:var(--linea);stroke-width:4}
+  .see-strich{stroke:var(--acqua);stroke-width:5}
+  #seeWasser{transition:y 1.1s cubic-bezier(.22,.8,.3,1), height 1.1s cubic-bezier(.22,.8,.3,1)}
+  .see-linie{stroke-width:4;vector-effect:non-scaling-stroke}
+  .see-linie-guardia{stroke:var(--allerta);stroke-width:4;stroke-dasharray:10 8}
+  .see-linie-mittel{stroke:var(--oliva-2);stroke-dasharray:5 7}
+  .see-linie-aktuell{stroke:var(--oliva);stroke-width:5;
+    transition:y1 1.1s cubic-bezier(.22,.8,.3,1), y2 1.1s cubic-bezier(.22,.8,.3,1)}
+  .see-label{position:absolute;left:4px;transform:translateY(50%);
+    font-family:'DM Mono',monospace;font-size:.6rem;line-height:1.2;white-space:nowrap;
+    color:var(--oliva-2);background:rgba(220,224,214,.88);padding:1px 4px;border-radius:2px;
+    pointer-events:none}
+  .see-label-aktuell{color:var(--oliva);font-weight:600;background:rgba(220,224,214,.96)}
+  .see-label-guardia{color:var(--allerta)}
+  .see-label-mittel{color:var(--oliva-2)}
 
-  .latte{position:relative;background:#DCE0D6;border:1px solid var(--linea);border-radius:2px;min-height:250px;overflow:hidden}
-  .wasser{
-    position:absolute;left:0;right:0;bottom:0;height:0;
-    background:linear-gradient(180deg,rgba(30,110,150,.55),rgba(30,110,150,.8));
-    transition:height 1.1s cubic-bezier(.22,.8,.3,1);
-  }
-  .wasser::before{content:"";position:absolute;top:0;left:0;right:0;height:5px;background:#0F5878;box-shadow:0 0 0 1px rgba(15,88,120,.35)}
-  .spanne5j{position:absolute;left:0;right:0;
-    background:repeating-linear-gradient(135deg,rgba(21,51,43,.10) 0 6px,rgba(21,51,43,.03) 6px 12px);
-    border-top:2px dashed var(--oliva-2);border-bottom:2px dashed var(--oliva-2);
-  }
-  .spanne5j-label{
-    position:absolute;left:3px;font-family:'DM Mono',monospace;font-size:.58rem;line-height:1.15;
-    color:var(--oliva-2);background:rgba(220,224,214,.85);padding:0 2px;max-width:calc(100% - 6px);
-  }
-  .spanne5j-label.spanne5j-max{top:2px}
-  .spanne5j-label.spanne5j-min{bottom:2px}
-  .marke{position:absolute;left:0;right:0;border-top:1px solid rgba(21,51,43,.35)}
-  .marke span{
-    position:absolute;right:4px;top:-1.05em;font-family:'DM Mono',monospace;
-    font-size:.62rem;color:var(--oliva-2);background:rgba(220,224,214,.75);padding:0 2px;
-  }
-  .marke.guardia{border-top:2px dashed var(--allerta)}
-  .marke.guardia span{color:var(--allerta);font-weight:500}
-  .marke.null{border-top:1.5px solid var(--oliva)}
-  .marke.null span{color:var(--oliva)}
   .pegel-info{grid-column:1 / -1}
-  @media (min-width:421px){.pegel-info{grid-column:3}}
+  @media (min-width:641px){.pegel-info{grid-column:2}}
   .pegel-info dl{margin:0}
   .pegel-info dt{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--oliva-2);margin-top:.75rem}
   .pegel-info dd{margin:.1rem 0 0;font-family:'DM Mono',monospace;font-size:.98rem}
+  .kennzahl{align-items:baseline}
+  .trend{font-size:1.5rem;line-height:1}
+  .trend.auf{color:var(--acqua)}
+  .trend.ab{color:var(--trocken)}
+  .trend.stabil{color:var(--oliva-2)}
   .tendenz{font-family:'Archivo',sans-serif;font-size:.85rem;color:var(--oliva-2)}
   .fahne{display:inline-block;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.06em;
     padding:.16rem .45rem;border-radius:2px;border:1px solid currentColor;margin-top:.6rem}
   .fahne.hoch{color:var(--allerta)}
   .fahne.normal{color:var(--acqua)}
   .fahne.tief{color:var(--trocken)}
+
+  .sparkline-wrap{display:flex;align-items:center;gap:.6rem;margin:.8rem 0 .2rem}
+  .sparkline{width:96px;height:28px;flex:none}
+  .sparkline-flaeche{fill:rgba(30,110,150,.14);stroke:none}
+  .sparkline-linie{fill:none;stroke:var(--acqua);stroke-width:2}
+  .sparkline-label{font-size:.68rem;color:var(--oliva-2)}
 
   .meldung{
     border-left:3px solid var(--allerta);background:#F6F0E2;padding:.6rem .8rem;
@@ -132,7 +134,7 @@
   footer{max-width:900px;margin:0 auto;padding:0 1rem 2.5rem;font-size:.74rem;color:var(--oliva-2)}
   footer a{color:var(--acqua)}
   .laedt{color:var(--oliva-2);font-family:'DM Mono',monospace;font-size:.8rem}
-  @media (prefers-reduced-motion:reduce){.wasser{transition:none}}
+  @media (prefers-reduced-motion:reduce){#seeWasser,.see-linie-aktuell{transition:none}}
 </style>
 </head>
 <body>
@@ -156,27 +158,46 @@
     </div>
 
     <div class="pegel">
-      <div class="kontur" aria-hidden="true">
-        <svg viewBox="0 0 660 1134" xmlns="http://www.w3.org/2000/svg">
-          <path class="kontur-see" d="M 633.00 24.00 C 627.67 20.50 627.67 26.67 620.00 24.00 C 612.33 21.33 594.33 -3.00 587.00 8.00 C 579.67 19.00 579.67 72.50 576.00 90.00 C 572.33 107.50 567.17 105.17 565.00 113.00 C 562.83 120.83 564.33 131.17 563.00 137.00 C 561.67 142.83 566.17 141.33 557.00 148.00 C 547.83 154.67 516.50 168.33 508.00 177.00 C 499.50 185.67 509.00 192.83 506.00 200.00 C 503.00 207.17 493.67 208.00 490.00 220.00 C 486.33 232.00 492.00 254.67 484.00 272.00 C 476.00 289.33 451.17 307.17 442.00 324.00 C 432.83 340.83 438.83 359.50 429.00 373.00 C 419.17 386.50 400.33 388.17 383.00 405.00 C 365.67 421.83 338.67 460.83 325.00 474.00 C 311.33 487.17 310.00 478.33 301.00 484.00 C 292.00 489.67 278.00 500.50 271.00 508.00 C 264.00 515.50 261.17 522.33 259.00 529.00 C 256.83 535.67 268.00 534.83 258.00 548.00 C 248.00 561.17 209.67 592.17 199.00 608.00 C 188.33 623.83 198.67 636.67 194.00 643.00 C 189.33 649.33 177.00 647.00 171.00 646.00 C 165.00 645.00 162.50 636.67 158.00 637.00 C 153.50 637.33 147.00 644.00 144.00 648.00 C 141.00 652.00 143.17 658.83 140.00 661.00 C 136.83 663.17 134.33 655.67 125.00 661.00 C 115.67 666.33 93.83 687.50 84.00 693.00 C 74.17 698.50 76.00 690.00 66.00 694.00 C 56.00 698.00 31.17 710.83 24.00 717.00 C 16.83 723.17 16.67 730.00 23.00 731.00 C 29.33 732.00 49.50 724.33 62.00 723.00 C 74.50 721.67 90.50 722.00 98.00 723.00 C 105.50 724.00 104.83 722.00 107.00 729.00 C 109.17 736.00 113.83 757.17 111.00 765.00 C 108.17 772.83 96.17 770.00 90.00 776.00 C 83.83 782.00 75.17 794.67 74.00 801.00 C 72.83 807.33 77.17 810.83 83.00 814.00 C 88.83 817.17 102.17 817.17 109.00 820.00 C 115.83 822.83 122.00 825.17 124.00 831.00 C 126.00 836.83 126.50 847.00 121.00 855.00 C 115.50 863.00 96.33 871.00 91.00 879.00 C 85.67 887.00 95.33 895.17 89.00 903.00 C 82.67 910.83 66.50 913.67 53.00 926.00 C 39.50 938.33 15.00 966.00 8.00 977.00 C 1.00 988.00 8.17 987.00 11.00 992.00 C 13.83 997.00 17.17 1004.17 25.00 1007.00 C 32.83 1009.83 52.67 1003.00 58.00 1009.00 C 63.33 1015.00 55.17 1034.67 57.00 1043.00 C 58.83 1051.33 58.50 1053.33 69.00 1059.00 C 79.50 1064.67 108.33 1074.67 120.00 1077.00 C 131.67 1079.33 132.00 1078.00 139.00 1073.00 C 146.00 1068.00 154.67 1051.50 162.00 1047.00 C 169.33 1042.50 178.83 1043.50 183.00 1046.00 C 187.17 1048.50 184.83 1058.17 187.00 1062.00 C 189.17 1065.83 188.00 1067.00 196.00 1069.00 C 204.00 1071.00 227.00 1071.00 235.00 1074.00 C 243.00 1077.00 235.67 1083.33 244.00 1087.00 C 252.33 1090.67 272.17 1089.50 285.00 1096.00 C 297.83 1102.50 313.50 1122.00 321.00 1126.00 C 328.50 1130.00 327.50 1125.50 330.00 1120.00 C 332.50 1114.50 331.17 1101.50 336.00 1093.00 C 340.83 1084.50 353.00 1079.17 359.00 1069.00 C 365.00 1058.83 365.50 1045.50 372.00 1032.00 C 378.50 1018.50 395.50 1012.83 398.00 988.00 C 400.50 963.17 391.00 903.33 387.00 883.00 C 383.00 862.67 377.00 874.33 374.00 866.00 C 371.00 857.67 371.83 841.83 369.00 833.00 C 366.17 824.17 359.83 820.50 357.00 813.00 C 354.17 805.50 357.00 793.67 352.00 788.00 C 347.00 782.33 336.50 779.67 327.00 779.00 C 317.50 778.33 300.33 787.50 295.00 784.00 C 289.67 780.50 292.17 767.17 295.00 758.00 C 297.83 748.83 308.67 739.50 312.00 729.00 C 315.33 718.50 312.67 702.00 315.00 695.00 C 317.33 688.00 321.00 696.83 326.00 687.00 C 331.00 677.17 336.33 651.50 345.00 636.00 C 353.67 620.50 358.67 626.67 378.00 594.00 C 397.33 561.33 443.50 470.17 461.00 440.00 C 478.50 409.83 479.33 420.17 483.00 413.00 C 486.67 405.83 478.17 405.00 483.00 397.00 C 487.83 389.00 506.67 375.50 512.00 365.00 C 517.33 354.50 512.33 340.50 515.00 334.00 C 517.67 327.50 525.67 330.67 528.00 326.00 C 530.33 321.33 525.00 318.17 529.00 306.00 C 533.00 293.83 544.00 265.17 552.00 253.00 C 560.00 240.83 571.33 239.67 577.00 233.00 C 582.67 226.33 580.67 219.83 586.00 213.00 C 591.33 206.17 601.83 212.67 609.00 192.00 C 616.17 171.33 622.00 111.17 629.00 89.00 C 636.00 66.83 647.17 66.33 651.00 59.00 C 654.83 51.67 655.00 50.83 652.00 45.00 C 649.00 39.17 638.33 27.50 633.00 24.00 Z"/>
+      <div class="seefuell" aria-hidden="true">
+        <svg viewBox="0 0 660 1134" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <clipPath id="seeClip" clipPathUnits="userSpaceOnUse">
+              <path d="M 633.00 24.00 C 627.67 20.50 627.67 26.67 620.00 24.00 C 612.33 21.33 594.33 -3.00 587.00 8.00 C 579.67 19.00 579.67 72.50 576.00 90.00 C 572.33 107.50 567.17 105.17 565.00 113.00 C 562.83 120.83 564.33 131.17 563.00 137.00 C 561.67 142.83 566.17 141.33 557.00 148.00 C 547.83 154.67 516.50 168.33 508.00 177.00 C 499.50 185.67 509.00 192.83 506.00 200.00 C 503.00 207.17 493.67 208.00 490.00 220.00 C 486.33 232.00 492.00 254.67 484.00 272.00 C 476.00 289.33 451.17 307.17 442.00 324.00 C 432.83 340.83 438.83 359.50 429.00 373.00 C 419.17 386.50 400.33 388.17 383.00 405.00 C 365.67 421.83 338.67 460.83 325.00 474.00 C 311.33 487.17 310.00 478.33 301.00 484.00 C 292.00 489.67 278.00 500.50 271.00 508.00 C 264.00 515.50 261.17 522.33 259.00 529.00 C 256.83 535.67 268.00 534.83 258.00 548.00 C 248.00 561.17 209.67 592.17 199.00 608.00 C 188.33 623.83 198.67 636.67 194.00 643.00 C 189.33 649.33 177.00 647.00 171.00 646.00 C 165.00 645.00 162.50 636.67 158.00 637.00 C 153.50 637.33 147.00 644.00 144.00 648.00 C 141.00 652.00 143.17 658.83 140.00 661.00 C 136.83 663.17 134.33 655.67 125.00 661.00 C 115.67 666.33 93.83 687.50 84.00 693.00 C 74.17 698.50 76.00 690.00 66.00 694.00 C 56.00 698.00 31.17 710.83 24.00 717.00 C 16.83 723.17 16.67 730.00 23.00 731.00 C 29.33 732.00 49.50 724.33 62.00 723.00 C 74.50 721.67 90.50 722.00 98.00 723.00 C 105.50 724.00 104.83 722.00 107.00 729.00 C 109.17 736.00 113.83 757.17 111.00 765.00 C 108.17 772.83 96.17 770.00 90.00 776.00 C 83.83 782.00 75.17 794.67 74.00 801.00 C 72.83 807.33 77.17 810.83 83.00 814.00 C 88.83 817.17 102.17 817.17 109.00 820.00 C 115.83 822.83 122.00 825.17 124.00 831.00 C 126.00 836.83 126.50 847.00 121.00 855.00 C 115.50 863.00 96.33 871.00 91.00 879.00 C 85.67 887.00 95.33 895.17 89.00 903.00 C 82.67 910.83 66.50 913.67 53.00 926.00 C 39.50 938.33 15.00 966.00 8.00 977.00 C 1.00 988.00 8.17 987.00 11.00 992.00 C 13.83 997.00 17.17 1004.17 25.00 1007.00 C 32.83 1009.83 52.67 1003.00 58.00 1009.00 C 63.33 1015.00 55.17 1034.67 57.00 1043.00 C 58.83 1051.33 58.50 1053.33 69.00 1059.00 C 79.50 1064.67 108.33 1074.67 120.00 1077.00 C 131.67 1079.33 132.00 1078.00 139.00 1073.00 C 146.00 1068.00 154.67 1051.50 162.00 1047.00 C 169.33 1042.50 178.83 1043.50 183.00 1046.00 C 187.17 1048.50 184.83 1058.17 187.00 1062.00 C 189.17 1065.83 188.00 1067.00 196.00 1069.00 C 204.00 1071.00 227.00 1071.00 235.00 1074.00 C 243.00 1077.00 235.67 1083.33 244.00 1087.00 C 252.33 1090.67 272.17 1089.50 285.00 1096.00 C 297.83 1102.50 313.50 1122.00 321.00 1126.00 C 328.50 1130.00 327.50 1125.50 330.00 1120.00 C 332.50 1114.50 331.17 1101.50 336.00 1093.00 C 340.83 1084.50 353.00 1079.17 359.00 1069.00 C 365.00 1058.83 365.50 1045.50 372.00 1032.00 C 378.50 1018.50 395.50 1012.83 398.00 988.00 C 400.50 963.17 391.00 903.33 387.00 883.00 C 383.00 862.67 377.00 874.33 374.00 866.00 C 371.00 857.67 371.83 841.83 369.00 833.00 C 366.17 824.17 359.83 820.50 357.00 813.00 C 354.17 805.50 357.00 793.67 352.00 788.00 C 347.00 782.33 336.50 779.67 327.00 779.00 C 317.50 778.33 300.33 787.50 295.00 784.00 C 289.67 780.50 292.17 767.17 295.00 758.00 C 297.83 748.83 308.67 739.50 312.00 729.00 C 315.33 718.50 312.67 702.00 315.00 695.00 C 317.33 688.00 321.00 696.83 326.00 687.00 C 331.00 677.17 336.33 651.50 345.00 636.00 C 353.67 620.50 358.67 626.67 378.00 594.00 C 397.33 561.33 443.50 470.17 461.00 440.00 C 478.50 409.83 479.33 420.17 483.00 413.00 C 486.67 405.83 478.17 405.00 483.00 397.00 C 487.83 389.00 506.67 375.50 512.00 365.00 C 517.33 354.50 512.33 340.50 515.00 334.00 C 517.67 327.50 525.67 330.67 528.00 326.00 C 530.33 321.33 525.00 318.17 529.00 306.00 C 533.00 293.83 544.00 265.17 552.00 253.00 C 560.00 240.83 571.33 239.67 577.00 233.00 C 582.67 226.33 580.67 219.83 586.00 213.00 C 591.33 206.17 601.83 212.67 609.00 192.00 C 616.17 171.33 622.00 111.17 629.00 89.00 C 636.00 66.83 647.17 66.33 651.00 59.00 C 654.83 51.67 655.00 50.83 652.00 45.00 C 649.00 39.17 638.33 27.50 633.00 24.00 Z"/>
+            </clipPath>
+            <linearGradient id="seeWasserGrad" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%" stop-color="#1E6E96" stop-opacity=".85"/>
+              <stop offset="100%" stop-color="#1E6E96" stop-opacity=".55"/>
+            </linearGradient>
+          </defs>
+          <path class="see-leer" d="M 633.00 24.00 C 627.67 20.50 627.67 26.67 620.00 24.00 C 612.33 21.33 594.33 -3.00 587.00 8.00 C 579.67 19.00 579.67 72.50 576.00 90.00 C 572.33 107.50 567.17 105.17 565.00 113.00 C 562.83 120.83 564.33 131.17 563.00 137.00 C 561.67 142.83 566.17 141.33 557.00 148.00 C 547.83 154.67 516.50 168.33 508.00 177.00 C 499.50 185.67 509.00 192.83 506.00 200.00 C 503.00 207.17 493.67 208.00 490.00 220.00 C 486.33 232.00 492.00 254.67 484.00 272.00 C 476.00 289.33 451.17 307.17 442.00 324.00 C 432.83 340.83 438.83 359.50 429.00 373.00 C 419.17 386.50 400.33 388.17 383.00 405.00 C 365.67 421.83 338.67 460.83 325.00 474.00 C 311.33 487.17 310.00 478.33 301.00 484.00 C 292.00 489.67 278.00 500.50 271.00 508.00 C 264.00 515.50 261.17 522.33 259.00 529.00 C 256.83 535.67 268.00 534.83 258.00 548.00 C 248.00 561.17 209.67 592.17 199.00 608.00 C 188.33 623.83 198.67 636.67 194.00 643.00 C 189.33 649.33 177.00 647.00 171.00 646.00 C 165.00 645.00 162.50 636.67 158.00 637.00 C 153.50 637.33 147.00 644.00 144.00 648.00 C 141.00 652.00 143.17 658.83 140.00 661.00 C 136.83 663.17 134.33 655.67 125.00 661.00 C 115.67 666.33 93.83 687.50 84.00 693.00 C 74.17 698.50 76.00 690.00 66.00 694.00 C 56.00 698.00 31.17 710.83 24.00 717.00 C 16.83 723.17 16.67 730.00 23.00 731.00 C 29.33 732.00 49.50 724.33 62.00 723.00 C 74.50 721.67 90.50 722.00 98.00 723.00 C 105.50 724.00 104.83 722.00 107.00 729.00 C 109.17 736.00 113.83 757.17 111.00 765.00 C 108.17 772.83 96.17 770.00 90.00 776.00 C 83.83 782.00 75.17 794.67 74.00 801.00 C 72.83 807.33 77.17 810.83 83.00 814.00 C 88.83 817.17 102.17 817.17 109.00 820.00 C 115.83 822.83 122.00 825.17 124.00 831.00 C 126.00 836.83 126.50 847.00 121.00 855.00 C 115.50 863.00 96.33 871.00 91.00 879.00 C 85.67 887.00 95.33 895.17 89.00 903.00 C 82.67 910.83 66.50 913.67 53.00 926.00 C 39.50 938.33 15.00 966.00 8.00 977.00 C 1.00 988.00 8.17 987.00 11.00 992.00 C 13.83 997.00 17.17 1004.17 25.00 1007.00 C 32.83 1009.83 52.67 1003.00 58.00 1009.00 C 63.33 1015.00 55.17 1034.67 57.00 1043.00 C 58.83 1051.33 58.50 1053.33 69.00 1059.00 C 79.50 1064.67 108.33 1074.67 120.00 1077.00 C 131.67 1079.33 132.00 1078.00 139.00 1073.00 C 146.00 1068.00 154.67 1051.50 162.00 1047.00 C 169.33 1042.50 178.83 1043.50 183.00 1046.00 C 187.17 1048.50 184.83 1058.17 187.00 1062.00 C 189.17 1065.83 188.00 1067.00 196.00 1069.00 C 204.00 1071.00 227.00 1071.00 235.00 1074.00 C 243.00 1077.00 235.67 1083.33 244.00 1087.00 C 252.33 1090.67 272.17 1089.50 285.00 1096.00 C 297.83 1102.50 313.50 1122.00 321.00 1126.00 C 328.50 1130.00 327.50 1125.50 330.00 1120.00 C 332.50 1114.50 331.17 1101.50 336.00 1093.00 C 340.83 1084.50 353.00 1079.17 359.00 1069.00 C 365.00 1058.83 365.50 1045.50 372.00 1032.00 C 378.50 1018.50 395.50 1012.83 398.00 988.00 C 400.50 963.17 391.00 903.33 387.00 883.00 C 383.00 862.67 377.00 874.33 374.00 866.00 C 371.00 857.67 371.83 841.83 369.00 833.00 C 366.17 824.17 359.83 820.50 357.00 813.00 C 354.17 805.50 357.00 793.67 352.00 788.00 C 347.00 782.33 336.50 779.67 327.00 779.00 C 317.50 778.33 300.33 787.50 295.00 784.00 C 289.67 780.50 292.17 767.17 295.00 758.00 C 297.83 748.83 308.67 739.50 312.00 729.00 C 315.33 718.50 312.67 702.00 315.00 695.00 C 317.33 688.00 321.00 696.83 326.00 687.00 C 331.00 677.17 336.33 651.50 345.00 636.00 C 353.67 620.50 358.67 626.67 378.00 594.00 C 397.33 561.33 443.50 470.17 461.00 440.00 C 478.50 409.83 479.33 420.17 483.00 413.00 C 486.67 405.83 478.17 405.00 483.00 397.00 C 487.83 389.00 506.67 375.50 512.00 365.00 C 517.33 354.50 512.33 340.50 515.00 334.00 C 517.67 327.50 525.67 330.67 528.00 326.00 C 530.33 321.33 525.00 318.17 529.00 306.00 C 533.00 293.83 544.00 265.17 552.00 253.00 C 560.00 240.83 571.33 239.67 577.00 233.00 C 582.67 226.33 580.67 219.83 586.00 213.00 C 591.33 206.17 601.83 212.67 609.00 192.00 C 616.17 171.33 622.00 111.17 629.00 89.00 C 636.00 66.83 647.17 66.33 651.00 59.00 C 654.83 51.67 655.00 50.83 652.00 45.00 C 649.00 39.17 638.33 27.50 633.00 24.00 Z"/>
+          <g clip-path="url(#seeClip)">
+            <rect id="seeWasser" x="0" y="1134" width="660" height="0" fill="url(#seeWasserGrad)"/>
+            <line id="seeGuardiaLinie" class="see-linie see-linie-guardia" x1="0" x2="660" y1="0" y2="0"/>
+            <line id="seeMittelLinie" class="see-linie see-linie-mittel" x1="0" x2="660" y1="0" y2="0"/>
+            <line id="seeAktuellLinie" class="see-linie see-linie-aktuell" x1="0" x2="660" y1="0" y2="0"/>
+          </g>
+          <path class="see-strich" fill="none" d="M 633.00 24.00 C 627.67 20.50 627.67 26.67 620.00 24.00 C 612.33 21.33 594.33 -3.00 587.00 8.00 C 579.67 19.00 579.67 72.50 576.00 90.00 C 572.33 107.50 567.17 105.17 565.00 113.00 C 562.83 120.83 564.33 131.17 563.00 137.00 C 561.67 142.83 566.17 141.33 557.00 148.00 C 547.83 154.67 516.50 168.33 508.00 177.00 C 499.50 185.67 509.00 192.83 506.00 200.00 C 503.00 207.17 493.67 208.00 490.00 220.00 C 486.33 232.00 492.00 254.67 484.00 272.00 C 476.00 289.33 451.17 307.17 442.00 324.00 C 432.83 340.83 438.83 359.50 429.00 373.00 C 419.17 386.50 400.33 388.17 383.00 405.00 C 365.67 421.83 338.67 460.83 325.00 474.00 C 311.33 487.17 310.00 478.33 301.00 484.00 C 292.00 489.67 278.00 500.50 271.00 508.00 C 264.00 515.50 261.17 522.33 259.00 529.00 C 256.83 535.67 268.00 534.83 258.00 548.00 C 248.00 561.17 209.67 592.17 199.00 608.00 C 188.33 623.83 198.67 636.67 194.00 643.00 C 189.33 649.33 177.00 647.00 171.00 646.00 C 165.00 645.00 162.50 636.67 158.00 637.00 C 153.50 637.33 147.00 644.00 144.00 648.00 C 141.00 652.00 143.17 658.83 140.00 661.00 C 136.83 663.17 134.33 655.67 125.00 661.00 C 115.67 666.33 93.83 687.50 84.00 693.00 C 74.17 698.50 76.00 690.00 66.00 694.00 C 56.00 698.00 31.17 710.83 24.00 717.00 C 16.83 723.17 16.67 730.00 23.00 731.00 C 29.33 732.00 49.50 724.33 62.00 723.00 C 74.50 721.67 90.50 722.00 98.00 723.00 C 105.50 724.00 104.83 722.00 107.00 729.00 C 109.17 736.00 113.83 757.17 111.00 765.00 C 108.17 772.83 96.17 770.00 90.00 776.00 C 83.83 782.00 75.17 794.67 74.00 801.00 C 72.83 807.33 77.17 810.83 83.00 814.00 C 88.83 817.17 102.17 817.17 109.00 820.00 C 115.83 822.83 122.00 825.17 124.00 831.00 C 126.00 836.83 126.50 847.00 121.00 855.00 C 115.50 863.00 96.33 871.00 91.00 879.00 C 85.67 887.00 95.33 895.17 89.00 903.00 C 82.67 910.83 66.50 913.67 53.00 926.00 C 39.50 938.33 15.00 966.00 8.00 977.00 C 1.00 988.00 8.17 987.00 11.00 992.00 C 13.83 997.00 17.17 1004.17 25.00 1007.00 C 32.83 1009.83 52.67 1003.00 58.00 1009.00 C 63.33 1015.00 55.17 1034.67 57.00 1043.00 C 58.83 1051.33 58.50 1053.33 69.00 1059.00 C 79.50 1064.67 108.33 1074.67 120.00 1077.00 C 131.67 1079.33 132.00 1078.00 139.00 1073.00 C 146.00 1068.00 154.67 1051.50 162.00 1047.00 C 169.33 1042.50 178.83 1043.50 183.00 1046.00 C 187.17 1048.50 184.83 1058.17 187.00 1062.00 C 189.17 1065.83 188.00 1067.00 196.00 1069.00 C 204.00 1071.00 227.00 1071.00 235.00 1074.00 C 243.00 1077.00 235.67 1083.33 244.00 1087.00 C 252.33 1090.67 272.17 1089.50 285.00 1096.00 C 297.83 1102.50 313.50 1122.00 321.00 1126.00 C 328.50 1130.00 327.50 1125.50 330.00 1120.00 C 332.50 1114.50 331.17 1101.50 336.00 1093.00 C 340.83 1084.50 353.00 1079.17 359.00 1069.00 C 365.00 1058.83 365.50 1045.50 372.00 1032.00 C 378.50 1018.50 395.50 1012.83 398.00 988.00 C 400.50 963.17 391.00 903.33 387.00 883.00 C 383.00 862.67 377.00 874.33 374.00 866.00 C 371.00 857.67 371.83 841.83 369.00 833.00 C 366.17 824.17 359.83 820.50 357.00 813.00 C 354.17 805.50 357.00 793.67 352.00 788.00 C 347.00 782.33 336.50 779.67 327.00 779.00 C 317.50 778.33 300.33 787.50 295.00 784.00 C 289.67 780.50 292.17 767.17 295.00 758.00 C 297.83 748.83 308.67 739.50 312.00 729.00 C 315.33 718.50 312.67 702.00 315.00 695.00 C 317.33 688.00 321.00 696.83 326.00 687.00 C 331.00 677.17 336.33 651.50 345.00 636.00 C 353.67 620.50 358.67 626.67 378.00 594.00 C 397.33 561.33 443.50 470.17 461.00 440.00 C 478.50 409.83 479.33 420.17 483.00 413.00 C 486.67 405.83 478.17 405.00 483.00 397.00 C 487.83 389.00 506.67 375.50 512.00 365.00 C 517.33 354.50 512.33 340.50 515.00 334.00 C 517.67 327.50 525.67 330.67 528.00 326.00 C 530.33 321.33 525.00 318.17 529.00 306.00 C 533.00 293.83 544.00 265.17 552.00 253.00 C 560.00 240.83 571.33 239.67 577.00 233.00 C 582.67 226.33 580.67 219.83 586.00 213.00 C 591.33 206.17 601.83 212.67 609.00 192.00 C 616.17 171.33 622.00 111.17 629.00 89.00 C 636.00 66.83 647.17 66.33 651.00 59.00 C 654.83 51.67 655.00 50.83 652.00 45.00 C 649.00 39.17 638.33 27.50 633.00 24.00 Z"/>
         </svg>
-      </div>
-      <div class="latte" id="latte" aria-hidden="true">
-        <div class="spanne5j" id="spanne5j">
-          <span class="spanne5j-label spanne5j-max" id="spanne5jMax"></span>
-          <span class="spanne5j-label spanne5j-min" id="spanne5jMin"></span>
-        </div>
-        <div class="wasser" id="wasser"></div>
+        <div class="see-label see-label-guardia" id="seeLabelGuardia">Quota di guardia +135 cm</div>
+        <div class="see-label see-label-mittel" id="seeLabelMittel">Ø langj. Mittel</div>
+        <div class="see-label see-label-aktuell" id="seeLabelAktuell">–</div>
       </div>
       <div class="pegel-info">
         <div class="kennzahl">
           <div class="kz-wert" id="pegelWert">–<small> cm</small></div>
+          <div class="trend" id="pegelTrendIcon" aria-hidden="true"></div>
         </div>
         <div class="tendenz" id="pegelTendenz">über dem Nullpunkt von Peschiera</div>
         <div id="pegelFahne"></div>
+        <div class="sparkline-wrap">
+          <svg id="trendSparkline" class="sparkline" viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <span class="sparkline-label">Verlauf, letzte 14 Tage</span>
+        </div>
         <dl>
           <dt>Quota di guardia</dt>
           <dd>+135 cm</dd>
+          <dt>Langjähriges Mittel<sup>†</sup></dt>
+          <dd>≈ +106 cm</dd>
           <dt>Änderung in 24 h</dt>
           <dd id="pegelDelta">–</dd>
           <dt>Messung</dt>
@@ -186,7 +207,7 @@
     </div>
 
     <div class="chart-box" style="height:180px"><canvas id="pegelChart"></canvas></div>
-    <p class="hinweis">Der Seespiegel wird über die Wehre von Salionze am Mincio geregelt; ab +135 cm über dem Nullpunkt gilt die Warnschwelle. Der schraffierte Bereich an der Pegellatte markiert die Spanne zwischen dem niedrigsten (Apr. 2023) und dem höchsten (Mai 2024) Stand der letzten 5 Jahre.</p>
+    <p class="hinweis">Der Seespiegel wird über die Wehre von Salionze am Mincio geregelt; ab +135 cm über dem Nullpunkt gilt die Warnschwelle. In der Seegrafik oben markiert die durchgezogene dunkle Linie den aktuellen Stand, die gepunktete Linie das langjährige Mittel<sup>†</sup> und die gestrichelte orangene Linie die Warnschwelle.</p>
 
     <h3 class="abschnitt-titel">Verlauf – letzte 4 Monate</h3>
     <div class="chart-box" id="historieBox" style="height:220px"><canvas id="pegelHistorieChart"></canvas></div>
@@ -198,8 +219,9 @@
 <footer class="innen">
   Seepegel: <a href="https://www.arpa.veneto.it" target="_blank" rel="noopener">ARPAV</a> (CC BY 4.0), Pegellatte Peschiera ·
   5-Jahres-Spanne: <a href="https://www.comunitadelgarda.it" target="_blank" rel="noopener">Comunità del Garda</a> / AIPO, siehe Hinweis oben ·
-  Gardasee-Kontur: aus einer Kartenvorlage extrahierte, vereinfachte Silhouette, keine amtliche Vermessung.
-  Alle Werte sind automatisch veröffentlicht und nicht validiert – sie können sich nachträglich noch ändern.
+  Gardasee-Kontur: vereinfachte, künstlerische Darstellung, keine amtliche Vermessung.
+  Alle Werte sind automatisch veröffentlicht und nicht validiert – sie können sich nachträglich noch ändern.<br>
+  † Langjähriges Mittel: ca. +106 cm, recherchierter Anhaltswert nach <a href="https://www.gardanotizie.it" target="_blank" rel="noopener">gardanotizie.it</a>, keine amtliche Langzeitstatistik – wird bei besser belegter Quelle angepasst.
 </footer>
 
 <script>
@@ -228,7 +250,13 @@ const CFG = {
     maxCm: 138,  // Hochwasser, ab 16. Mai 2024 (höchster Stand seit 1997)
     minLabel: 'Min. 5 J. (Apr. 2023)',
     maxLabel: 'Max. 5 J. (Mai 2024)'
-  }
+  },
+  // Langjähriges Mittel des Pegels Peschiera - ARPAV liefert dafür keine öffentliche
+  // Langzeitstatistik, daher von Hand recherchiert (gardanotizie.it) statt live berechnet.
+  // Bester bislang gefundener Anhaltswert; bei besserer Quelle bitte hier UND in der
+  // Fußnote im HTML anpassen.
+  mittelCm: 106,
+  mittelLabel: 'Ø +106 cm langj. Mittel'
 };
 
 const $ = s => document.querySelector(s);
@@ -244,6 +272,10 @@ function meldung(text){
  *  Seepegel – ARPAV XML (letzte ~3 Tage, 103 Stationen)
  * ------------------------------------------------------------------ */
 let pegelChart;
+let letzterErfolgZeit = null;   // Zeitpunkt des letzten erfolgreichen ARPAV-Abrufs (Browserzeit,
+                                  // nicht zu verwechseln mit dem Messzeitpunkt in #pegelZeit) -
+                                  // damit der Fehlerfall ehrlich sagen kann, dass noch der alte
+                                  // Stand angezeigt wird, statt fälschlich "nichts geladen" zu wirken.
 
 async function ladeSeepegel(){
   try{
@@ -289,48 +321,94 @@ async function ladeSeepegel(){
     else if (letzte.cm < 50)             f.innerHTML = '<span class="fahne tief">niedriger Seestand</span>';
     else                                 f.innerHTML = '<span class="fahne normal">im üblichen Bereich</span>';
 
-    zeichnePegellatte(letzte.cm);
+    const trend = $('#pegelTrendIcon');
+    if (delta===null){ trend.textContent=''; trend.className='trend'; }
+    else if (Math.abs(delta) < 0.5){ trend.textContent='→'; trend.className='trend stabil'; trend.title='stabil'; }
+    else if (delta > 0){ trend.textContent='↑'; trend.className='trend auf'; trend.title='steigend'; }
+    else { trend.textContent='↓'; trend.className='trend ab'; trend.title='fallend'; }
+
+    zeichneSeeFuellung(letzte.cm);
     zeichnePegelChart(reihe);
+    letzterErfolgZeit = new Date();
 
   }catch(e){
-    $('#pegelQuelle').textContent = 'ARPAV nicht erreichbar';
-    meldung('Der Seepegel konnte gerade nicht geladen werden (ARPAV antwortet nicht oder zu langsam). '+
-      'Ein erneuter Versuch über „Daten neu laden“ hilft meist – die Quelle liefert nicht immer zuverlässig. '+
-      'Lokal testen erfordert <code>netlify dev</code>, da die Netlify Function sonst nicht läuft.');
+    if (letzterErfolgZeit){
+      // Es gab bereits einen erfolgreichen Abruf zuvor - die zuletzt geladenen Werte bleiben
+      // sichtbar (nützlicher als sie zu löschen), aber die Meldung muss ehrlich sagen, dass es
+      // nicht der aktuellste Stand ist, sonst wirkt es widersprüchlich (Fehlermeldung oben,
+      // scheinbar frische Zahlen unten).
+      $('#pegelQuelle').innerHTML = `ARPAV gerade nicht erreichbar<br>zeige letzten bekannten Stand (${tag(letzterErfolgZeit)}, ${uhr(letzterErfolgZeit)} abgerufen)`;
+      meldung('Die Seepegel-Daten konnten gerade nicht aktualisiert werden (ARPAV antwortet nicht oder zu langsam). '+
+        'Die unten angezeigten Zahlen sind der zuletzt erfolgreich abgerufene Stand, nicht zwingend der aktuellste. '+
+        'Ein erneutes Laden der Seite hilft meist – die Quelle liefert nicht immer zuverlässig. '+
+        'Lokal testen erfordert <code>netlify dev</code>, da die Netlify Function sonst nicht läuft.');
+    } else {
+      $('#pegelQuelle').textContent = 'ARPAV nicht erreichbar';
+      meldung('Der Seepegel konnte gerade nicht geladen werden (ARPAV antwortet nicht oder zu langsam). '+
+        'Ein erneutes Laden der Seite hilft meist – die Quelle liefert nicht immer zuverlässig. '+
+        'Lokal testen erfordert <code>netlify dev</code>, da die Netlify Function sonst nicht läuft.');
+    }
   }
 }
 
-function zeichnePegellatte(cm){
+/* Der Gardasee-Umriss selbst dient als Pegelanzeige: ein zum See-Pfad identisches
+ * <rect>, das per <clipPath> auf die Seeform beschnitten wird, füllt sich von unten
+ * (y/height in SVG-Einheiten, Höhe 1134 = ganze viewBox) entsprechend dem aktuellen
+ * Stand auf derselben Skala (CFG.lattenBereich) wie zuvor die separate Pegellatte.
+ * Marker-Linien für aktuellen Stand, langjähriges Mittel und Warnschwelle liegen in
+ * derselben geclippten Gruppe, erscheinen also nur innerhalb der Seefläche. */
+function zeichneSeeFuellung(cm){
   const {min,max} = CFG.lattenBereich;
-  const pos = w => ((w-min)/(max-min))*100;   // % von unten
-  const latte = $('#latte');
-  latte.querySelectorAll('.marke').forEach(m => m.remove());
+  const H = 1134;   // Höhe der viewBox
+  const pos = w => Math.max(0, Math.min(100, ((w-min)/(max-min))*100));   // % von unten
+  const yFuer = pct => H - (pct/100)*H;
 
-  const marken = [
-    {w:0,   t:'0',    k:'null'},
-    {w:50,  t:'+50'},
-    {w:100, t:'+100'},
-    {w:CFG.guardiaCm, t:'+135', k:'guardia'}
-  ];
-  for (const m of marken){
-    const el = document.createElement('div');
-    el.className = 'marke' + (m.k ? ' '+m.k : '');
-    el.style.bottom = pos(m.w)+'%';
-    el.innerHTML = `<span>${m.t}</span>`;
-    latte.appendChild(el);
-  }
-  const { minCm, maxCm, minLabel, maxLabel } = CFG.spanne5j;
-  const spanneUnten = Math.max(0, Math.min(100, pos(minCm)));
-  const spanneOben  = Math.max(0, Math.min(100, pos(maxCm)));
-  const spanne = $('#spanne5j');
-  spanne.style.bottom = spanneUnten + '%';
-  spanne.style.height = Math.max(0, spanneOben - spanneUnten) + '%';
-  $('#spanne5jMax').textContent = maxLabel;
-  $('#spanne5jMin').textContent = minLabel;
-
+  const pctAktuell = pos(cm);
+  const yAktuell = yFuer(pctAktuell);
   requestAnimationFrame(() => {
-    $('#wasser').style.height = Math.max(0, Math.min(100, pos(cm))) + '%';
+    $('#seeWasser').setAttribute('y', yAktuell);
+    $('#seeWasser').setAttribute('height', H - yAktuell);
+    $('#seeAktuellLinie').setAttribute('y1', yAktuell);
+    $('#seeAktuellLinie').setAttribute('y2', yAktuell);
   });
+  $('#seeLabelAktuell').textContent = `${cm>=0?'+':''}${zahl(cm,0)} cm aktuell`;
+  $('#seeLabelAktuell').style.bottom = pctAktuell + '%';
+
+  const pctMittel = pos(CFG.mittelCm);
+  const yMittel = yFuer(pctMittel);
+  $('#seeMittelLinie').setAttribute('y1', yMittel);
+  $('#seeMittelLinie').setAttribute('y2', yMittel);
+  $('#seeLabelMittel').textContent = CFG.mittelLabel;
+  $('#seeLabelMittel').style.bottom = pctMittel + '%';
+
+  const pctGuardia = pos(CFG.guardiaCm);
+  const yGuardia = yFuer(pctGuardia);
+  $('#seeGuardiaLinie').setAttribute('y1', yGuardia);
+  $('#seeGuardiaLinie').setAttribute('y2', yGuardia);
+  $('#seeLabelGuardia').style.bottom = pctGuardia + '%';
+}
+
+/* Kompakter Trend-Sparkline aus den letzten 14 Archiv-Tagen (siehe ladeSeepegelHistorie),
+ * damit man die jüngste Entwicklung auf einen Blick sieht, ohne den großen 4-Monats-Chart
+ * aufzurufen. */
+function zeichneTrendSparkline(tage){
+  const letzte = tage.slice(-14);
+  const svg = $('#trendSparkline');
+  if (letzte.length < 2){ svg.innerHTML = ''; return; }
+
+  const werte = letzte.map(t => t.cm);
+  const min = Math.min(...werte), max = Math.max(...werte);
+  const spanne = (max - min) || 1;
+  const W = 200, H = 40, pad = 3;
+  const pts = werte.map((v,i) => {
+    const x = (i/(werte.length-1)) * (W-2*pad) + pad;
+    const y = H - pad - ((v-min)/spanne) * (H-2*pad);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const flaechePts = `${pad},${H-pad} ${pts.join(' ')} ${W-pad},${H-pad}`;
+  svg.innerHTML =
+    `<polygon class="sparkline-flaeche" points="${flaechePts}"/>` +
+    `<polyline class="sparkline-linie" points="${pts.join(' ')}"/>`;
 }
 
 function zeichnePegelChart(reihe){
@@ -383,6 +461,7 @@ async function ladeSeepegelHistorie(){
         + ' täglich echte ARPAV-Werte. Für einen Verlauf braucht es noch ein paar Tage mehr.</div>';
       return;
     }
+    zeichneTrendSparkline(tage);
     if (!box.querySelector('canvas')){
       box.innerHTML = '<canvas id="pegelHistorieChart"></canvas>';
     }
