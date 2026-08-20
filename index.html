@@ -62,14 +62,6 @@
   }
   .karte-kopf{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin-bottom:.9rem}
   h2{font-family:'Instrument Serif',serif;font-weight:400;font-size:1.55rem;margin:0}
-  .abschnitt-titel{
-    font-family:'Instrument Serif',serif;font-weight:400;font-size:1.15rem;
-    margin:1.4rem 0 .3rem;padding-top:1rem;border-top:1px solid var(--linea);
-  }
-  .historie-leer{
-    display:flex;align-items:center;justify-content:center;height:100%;
-    color:var(--oliva-2);font-size:.85rem;text-align:center;padding:0 1rem;
-  }
   .quelle{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--oliva-2);text-align:right}
   .kennzahl{margin-bottom:0}
   .kz-wert{font-family:'Instrument Serif',serif;font-size:2.3rem;line-height:1.15}
@@ -224,27 +216,17 @@
     <div class="chart-box" style="height:180px"><canvas id="pegelChart"></canvas></div>
     <p class="hinweis">Der Seespiegel wird über die Wehre von Salionze am Mincio geregelt; ab +135 cm über dem Nullpunkt gilt die Warnschwelle. In der Seegrafik oben markiert die durchgezogene dunkle Linie den aktuellen Stand, die gepunktete Linie den Normalstand<sup>†</sup> und die gestrichelte orangene Linie die Warnschwelle.</p>
     <p class="hinweis it">Il livello del lago è regolato dalle paratoie di Salionze sul Mincio; oltre i +135 cm sopra lo zero idrometrico vige la quota di guardia. Nella sagoma del lago sopra, la linea scura continua indica il livello attuale, la linea punteggiata il livello normale<sup>†</sup> e la linea tratteggiata arancione la quota di guardia.</p>
-
-    <h3 class="abschnitt-titel">Verlauf – letzte 14 Tage · Andamento – ultimi 14 giorni</h3>
-    <div class="chart-box" id="verlauf14Box" style="height:220px"><canvas id="pegel14Chart"></canvas></div>
-
-    <h3 class="abschnitt-titel">Verlauf – letzte 4 Monate · Andamento – ultimi 4 mesi</h3>
-    <div class="chart-box" id="historieBox" style="height:220px"><canvas id="pegelHistorieChart"></canvas></div>
-    <p class="hinweis" id="historieHinweis">Diese Kurve zeichnet BENACO selbst Tag für Tag aus den ARPAV-Werten auf, seit die Funktion eingeführt wurde – kein rückwirkend geschätzter Verlauf, sondern nur echte, hier aufgezeichnete Messwerte. Die gestrichelten Linien zeigen das 5-Jahres-Minimum und -Maximum von oben.</p>
-    <p class="hinweis it">Questo grafico viene registrato da BENACO stesso, giorno per giorno, a partire dai dati ARPAV da quando questa funzione è stata introdotta – nessun andamento stimato retroattivamente, solo valori reali qui registrati. Le linee tratteggiate mostrano il minimo e il massimo degli ultimi 5 anni indicati sopra.</p>
   </section>
 
 </main>
 
 <footer class="innen">
   Seepegel: <a href="https://www.arpa.veneto.it" target="_blank" rel="noopener">ARPAV</a> (CC BY 4.0), Pegellatte Peschiera ·
-  5-Jahres-Spanne: <a href="https://www.comunitadelgarda.it" target="_blank" rel="noopener">Comunità del Garda</a> / AIPO, siehe Hinweis oben ·
   Gardasee-Kontur: vereinfachte, künstlerische Darstellung, keine amtliche Vermessung.
   Alle Werte sind automatisch veröffentlicht und nicht validiert – sie können sich nachträglich noch ändern.<br>
   † Normalstand (langjähriges Mittel): ca. +106 cm, recherchierter Anhaltswert nach <a href="https://www.gardanotizie.it" target="_blank" rel="noopener">gardanotizie.it</a>, keine amtliche Langzeitstatistik – wird bei besser belegter Quelle angepasst.
   <p class="it" style="margin:.6rem 0 0">
     Livello del lago: <a href="https://www.arpa.veneto.it" target="_blank" rel="noopener">ARPAV</a> (CC BY 4.0), idrometro di Peschiera ·
-    Range 5 anni: <a href="https://www.comunitadelgarda.it" target="_blank" rel="noopener">Comunità del Garda</a> / AIPO, vedi nota sopra ·
     Sagoma del Lago di Garda: rappresentazione semplificata e artistica, non un rilievo ufficiale.
     Tutti i valori sono pubblicati automaticamente e non validati – possono ancora cambiare.<br>
     † Livello normale (media pluriennale): ca. +106 cm, valore di riferimento ricercato secondo <a href="https://www.gardanotizie.it" target="_blank" rel="noopener">gardanotizie.it</a>, nessuna statistica ufficiale a lungo termine – verrà adeguato con una fonte meglio documentata.
@@ -262,21 +244,7 @@ const CFG = {
     // Eigene Netlify Function statt Redirect-Proxy: die ARPAV-Rohdatei ist mehrere MB groß
     // (alle ~103 Stationen Venetiens) und führte über einen reinen Proxy gelegentlich zu
     // Timeouts. Die Function liest/filtert serverseitig und liefert nur die Garda-Station.
-    url: '/.netlify/functions/seepegel-lesen',
-    // ARPAV selbst liefert öffentlich nur eine ~3-Tage-Reihe (Ultime48ore.xml), keine
-    // Mehrmonats-Historie. seepegel-lesen.mjs trägt deshalb bei jedem Aufruf den aktuellen
-    // Tageswert in ein eigenes Archiv (Netlify Blobs) ein; diese Function liest es nur aus.
-    archivUrl: '/.netlify/functions/seepegel-archiv'
-  },
-  // 5-Jahres-Spanne (ca. 2021–2026) am Pegel Peschiera, cm über hydrometrischem Nullpunkt.
-  // ARPAVs Live-XML liefert nur ~48h Rückblick, keine Mehrjahresstatistik - diese beiden
-  // Werte sind deshalb von Hand recherchiert und belegt (siehe Fußnote im HTML) statt live
-  // berechnet. Bei einem neuen Rekord bitte hier UND im <p class="hinweis"> unten anpassen.
-  spanne5j: {
-    minCm: 45,   // Frühjahrstrockenheit, ca. 19. April 2023 (mehrfach in Presse/Fachartikeln belegt)
-    maxCm: 138,  // Hochwasser, ab 16. Mai 2024 (höchster Stand seit 1997)
-    minLabel: 'Min. 5 J. (Apr. 2023) · Min. 5 anni (apr. 2023)',
-    maxLabel: 'Max. 5 J. (Mai 2024) · Max. 5 anni (mag. 2024)'
+    url: '/.netlify/functions/seepegel-lesen'
   },
   // Langjähriges Mittel des Pegels Peschiera - ARPAV liefert dafür keine öffentliche
   // Langzeitstatistik, daher von Hand recherchiert (gardanotizie.it) statt live berechnet.
@@ -462,52 +430,6 @@ function zeichneSeeFuellung(cm){
   $('#seeLabelGuardia').style.bottom = pctGuardia + '%';
 }
 
-let pegel14Chart;
-
-/* Eigener, vollwertiger Chart für die letzten 14 Archiv-Tage (siehe ladeSeepegelHistorie) -
- * war zuvor eine winzige 96x28px-Sparkline direkt neben der Kennzahl, auf Wunsch zu einem
- * echten, größeren Chart ausgebaut (gleiche Bauart wie der 4-Monats-Chart darunter). */
-function zeichneVerlauf14(tage){
-  const letzte = tage.slice(-14);
-  const box = $('#verlauf14Box');
-  if (letzte.length < 2){
-    box.innerHTML = '<div class="historie-leer">Noch nicht genug aufgezeichnete Tage für einen 14-Tage-Verlauf.<br>'+
-      '<span class="it">Non ci sono ancora abbastanza giorni registrati per un andamento di 14 giorni.</span></div>';
-    return;
-  }
-  if (!box.querySelector('canvas')){
-    box.innerHTML = '<canvas id="pegel14Chart"></canvas>';
-  }
-  const labels = letzte.map(t => {
-    const d = new Date(t.datum + 'T12:00:00');
-    return `${d.getDate()}.${d.getMonth()+1}.`;
-  });
-  if (pegel14Chart) pegel14Chart.destroy();
-  pegel14Chart = new Chart($('#pegel14Chart'), {
-    type:'line',
-    data:{
-      labels,
-      datasets:[{
-        label:'Pegel',
-        data: letzte.map(t => t.cm),
-        borderColor:'#1E6E96', backgroundColor:'rgba(30,110,150,.10)',
-        borderWidth:1.8, pointRadius:2, pointBackgroundColor:'#1E6E96', tension:.25, fill:true
-      }]
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{
-        legend:{display:false},
-        tooltip:{callbacks:{label:c => `${zahl(c.parsed.y,0)} cm`}}
-      },
-      scales:{
-        x:{ticks:{maxTicksLimit:7,font:{size:10,family:'DM Mono'},color:'#4A6157'},grid:{display:false}},
-        y:{ticks:{font:{size:10,family:'DM Mono'},color:'#4A6157',callback:v=>v+' cm'},grid:{color:'#DDE3DA'}}
-      }
-    }
-  });
-}
-
 function zeichnePegelChart(reihe){
   const punkte = reihe.filter((_,i) => i % 3 === 0);   // ausdünnen
   if (pegelChart) pegelChart.destroy();
@@ -535,94 +457,10 @@ function zeichnePegelChart(reihe){
   });
 }
 
-let pegelHistorieChart;
-
-/* ------------------------------------------------------------------ *
- *  Verlauf – letzte 4 Monate (selbst aufgebautes Archiv, siehe CFG.arpav.archivUrl
- *  und netlify/functions/seepegel-archiv.mjs: ARPAV liefert öffentlich nur eine
- *  ~3-Tage-Reihe, keine Mehrmonats-Historie. seepegel-lesen.mjs trägt deshalb bei
- *  jedem Seitenaufruf den aktuellen Tageswert in ein Netlify-Blobs-Archiv ein - diese
- *  Funktion liest nur aus, was die Seite selbst bereits aufgezeichnet hat. Deshalb ist
- *  die Kurve anfangs kurz und wächst täglich, statt rückwirkend Werte zu erfinden.
- * ------------------------------------------------------------------ */
-async function ladeSeepegelHistorie(){
-  const box = $('#historieBox');
-  try{
-    const r = await fetch(CFG.arpav.archivUrl, {cache:'no-store'});
-    const daten = await r.json();
-    const tage = (daten && daten.tage) || [];
-
-    if (tage.length < 2){
-      const seitDatumDe = tage.length ? tag(new Date(tage[0].datum)) : 'heute';
-      const seitDatumIt = tage.length ? tag(new Date(tage[0].datum)) : 'oggi';
-      const leerText = 'Das Archiv sammelt seit ' + seitDatumDe
-        + ' täglich echte ARPAV-Werte. Für einen Verlauf braucht es noch ein paar Tage mehr.'
-        + '<br><span class="it">L\'archivio raccoglie dati reali ARPAV ogni giorno dal ' + seitDatumIt
-        + ', per un andamento servono ancora alcuni giorni.</span>';
-      box.innerHTML = '<div class="historie-leer">' + leerText + '</div>';
-      $('#verlauf14Box').innerHTML = '<div class="historie-leer">' + leerText + '</div>';
-      return;
-    }
-    zeichneVerlauf14(tage);
-    if (!box.querySelector('canvas')){
-      box.innerHTML = '<canvas id="pegelHistorieChart"></canvas>';
-    }
-
-    const { minCm, maxCm, minLabel, maxLabel } = CFG.spanne5j;
-    const labels = tage.map(t => {
-      const d = new Date(t.datum + 'T12:00:00');
-      return `${d.getDate()}.${d.getMonth()+1}.`;
-    });
-
-    if (pegelHistorieChart) pegelHistorieChart.destroy();
-    pegelHistorieChart = new Chart($('#pegelHistorieChart'), {
-      type:'line',
-      data:{
-        labels,
-        datasets:[
-          {
-            label:'Pegel',
-            data: tage.map(t => t.cm),
-            borderColor:'#1E6E96', backgroundColor:'rgba(30,110,150,.10)',
-            borderWidth:1.8, pointRadius:0, tension:.2, fill:true
-          },
-          {
-            label: maxLabel,
-            data: tage.map(() => maxCm),
-            borderColor:'#4A6157', borderDash:[5,4], borderWidth:1.3,
-            pointRadius:0, fill:false
-          },
-          {
-            label: minLabel,
-            data: tage.map(() => minCm),
-            borderColor:'#4A6157', borderDash:[5,4], borderWidth:1.3,
-            pointRadius:0, fill:false
-          }
-        ]
-      },
-      options:{
-        responsive:true, maintainAspectRatio:false,
-        plugins:{
-          legend:{display:false},
-          tooltip:{callbacks:{label:c => `${c.dataset.label}: ${zahl(c.parsed.y,0)} cm`}}
-        },
-        scales:{
-          x:{ticks:{maxTicksLimit:6,font:{size:10,family:'DM Mono'},color:'#4A6157'},grid:{display:false}},
-          y:{ticks:{font:{size:10,family:'DM Mono'},color:'#4A6157',callback:v=>v+' cm'},grid:{color:'#DDE3DA'}}
-        }
-      }
-    });
-  }catch(e){
-    box.innerHTML = '<div class="historie-leer">Verlauf konnte gerade nicht geladen werden.<br>'+
-      '<span class="it">Al momento non è stato possibile caricare l\'andamento.</span></div>';
-  }
-}
-
 /* ------------------------------------------------------------------ *
  *  Start
  * ------------------------------------------------------------------ */
 ladeSeepegel();
-ladeSeepegelHistorie();
 </script>
 </body>
 </html>

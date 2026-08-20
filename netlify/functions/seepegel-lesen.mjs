@@ -13,14 +13,6 @@
 //
 // Erreichbar unter der garantierten Standard-URL jeder Netlify Function:
 // /.netlify/functions/seepegel-lesen
-//
-// Trägt bei jedem Aufruf zusätzlich den aktuellen Tageswert in ein selbst geführtes
-// Archiv ein (Netlify Blobs, Store "seepegel-historie"). ARPAV liefert öffentlich nur
-// eine ~3-Tage-Reihe, keine Mehrmonats-Historie - dieses Archiv wächst deshalb ab dem
-// Tag der Einführung dieser Funktion Tag für Tag mit echten ARPAV-Werten, statt eine
-// Vergangenheit rückwirkend zu schätzen. Ausgelesen wird es von seepegel-archiv.mjs.
-
-import { getStore } from "@netlify/blobs";
 
 const QUELLE = "https://www.arpa.veneto.it/api/risorse/data-meteo/xml/Ultime48ore.xml";
 const SUCHE = /garda|peschiera/i;
@@ -89,40 +81,5 @@ export default async () => {
     werte.push({ istante: m[1], vm: wert });
   }
 
-  if (werte.length) {
-    try {
-      await pflegeArchiv(werte, einheit);
-    } catch (e) {
-      // Ein Fehler beim Archiv-Schreiben darf die eigentliche Antwort nicht verhindern -
-      // der aktuelle Pegel muss auch dann angezeigt werden, wenn das Archiv gerade klemmt.
-      console.error("archiv-fehler", e);
-    }
-  }
-
   return json(200, { name: treffer.nome, einheit, werte });
 };
-
-async function pflegeArchiv(werte, einheit) {
-  const letzte = werte[werte.length - 1];
-  const cm = einheit === "m" ? Math.round(letzte.vm * 100 * 10) / 10 : letzte.vm;
-  const s = letzte.istante;   // YYYYMMDDHHMM
-  const datum = `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
-
-  const store = getStore("seepegel-historie");
-  const bisher = (await store.get("tage", { type: "json" })) || [];
-
-  const idx = bisher.findIndex((e) => e.datum === datum);
-  if (idx >= 0) bisher[idx].cm = cm;
-  else bisher.push({ datum, cm });
-
-  bisher.sort((a, b) => a.datum.localeCompare(b.datum));
-
-  // Rolling window: nur die letzten ~200 Tage behalten - grosszügiger Puffer über die
-  // im Frontend angezeigten 4 Monate hinaus, für eine später evtl. längere Ansicht.
-  const grenze = new Date();
-  grenze.setDate(grenze.getDate() - 200);
-  const grenzeStr = grenze.toISOString().slice(0, 10);
-  const bereinigt = bisher.filter((e) => e.datum >= grenzeStr);
-
-  await store.setJSON("tage", bereinigt);
-}
