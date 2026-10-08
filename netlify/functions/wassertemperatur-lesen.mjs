@@ -80,10 +80,5 @@ export default async () => {
   const wert = parseAppa(html);
   if (!wert) return json(502, { error: "appa-format-unbekannt" });
 
-  return json(200, {
-    ...wert,
-    ort: "Riva del Garda · Spiaggia dei Sabbioni",
-    tiefeM: 1,
-    quelle: "APPA Trento",
-  });
+  return json(200, wert);   // { grad, zeit } - bewusst ohne Ortsangabe
 };
