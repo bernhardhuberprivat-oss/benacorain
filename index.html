@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#15332B">
-<title>BENACO · Seepegel Gardasee</title>
+<title>BENACO · Seepegel & Wassertemperatur Gardasee</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png">
@@ -139,6 +139,29 @@
   footer{max-width:900px;margin:0 auto;padding:0 1rem 2.5rem;font-size:.74rem;color:var(--oliva-2)}
   footer a{color:var(--acqua)}
   .laedt{color:var(--oliva-2);font-family:'DM Mono',monospace;font-size:.8rem}
+  /* Wassertemperatur (APPA-Sonde Riva del Garda) */
+  .temp{display:grid;grid-template-columns:auto 1fr;gap:1.4rem;align-items:center}
+  @media (max-width:640px){.temp{grid-template-columns:1fr;gap:.6rem}}
+  .temp-wert{font-family:'Instrument Serif',serif;font-size:3.4rem;line-height:1;color:var(--acqua);white-space:nowrap}
+  .temp-wert small{font-size:1.6rem;color:var(--oliva-2);margin-left:.1rem}
+  .temp-wert small:first-child{margin:0 .15rem 0 0}
+  .temp-gefuehl{font-family:'Instrument Serif',serif;font-size:1.25rem;line-height:1.2;margin-top:.35rem}
+  .temp-gefuehl .it{color:var(--oliva-2)}
+  .temp-skala{position:relative;height:6px;border-radius:3px;margin-top:.9rem;
+    background:linear-gradient(90deg,#8FB9CE 0%,#1E6E96 45%,#C08A1E 80%,#A8763F 100%)}
+  .temp-marke{position:absolute;top:-5px;width:3px;height:16px;background:var(--oliva);border-radius:1px;
+    transform:translateX(-50%);transition:left 1.1s cubic-bezier(.22,.8,.3,1)}
+  .temp-skala-zahlen{position:relative;height:1em;font-family:'DM Mono',monospace;
+    font-size:.6rem;color:var(--oliva-2);margin-top:.3rem}
+  .temp-skala-zahlen span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+  .temp-skala-zahlen span:first-child{transform:none}
+  .temp-skala-zahlen span:last-child{transform:translateX(-100%)}
+  .temp-info dl{margin:0}
+  .temp-info dt{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--oliva-2);margin-top:.75rem}
+  .temp-info dt:first-child{margin-top:0}
+  .temp-info dd{margin:.1rem 0 0;font-family:'DM Mono',monospace;font-size:.92rem}
+  .temp-alt{color:var(--trocken)}
+  @media (prefers-reduced-motion:reduce){.temp-marke{transition:none}}
   @media (prefers-reduced-motion:reduce){#seeWasser,.see-linie-aktuell{transition:none}}
 </style>
 </head>
@@ -218,15 +241,41 @@
     <p class="hinweis it">Il livello del lago è regolato dalle paratoie di Salionze sul Mincio; oltre i +135 cm sopra lo zero idrometrico vige la quota di guardia. Nella sagoma del lago sopra, la linea scura continua indica il livello attuale, la linea punteggiata il livello normale<sup>†</sup> e la linea tratteggiata arancione la quota di guardia.</p>
   </section>
 
+  <!-- ============ WASSERTEMPERATUR ============ -->
+  <section class="karte">
+    <div class="karte-kopf">
+      <h2>Wassertemperatur · Temperatura dell'acqua</h2>
+      <div class="quelle" id="tempQuelle">lädt … · caricamento…</div>
+    </div>
+    <div class="temp">
+      <div>
+        <div class="temp-wert" id="tempWert">–</div>
+        <div class="temp-gefuehl" id="tempGefuehl"></div>
+      </div>
+      <div class="temp-info">
+        <dl>
+          <dt>Schätzwert · Stima</dt>
+          <dd>für den Südsee · per il basso lago</dd>
+          <dt>Stand · Aggiornamento</dt>
+          <dd id="tempZeit">–</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="temp-skala" aria-hidden="true"><div class="temp-marke" id="tempMarke" style="left:0;display:none"></div></div>
+    <div class="temp-skala-zahlen" aria-hidden="true"><span style="left:0">5 °C</span><span style="left:40%">15 °C</span><span style="left:80%">25 °C</span><span style="left:100%">30 °C</span></div>
+  </section>
+
 </main>
 
 <footer class="innen">
   Seepegel: <a href="https://www.arpa.veneto.it" target="_blank" rel="noopener">ARPAV</a> (CC BY 4.0), Pegellatte Peschiera ·
-  Gardasee-Kontur: vereinfachte, künstlerische Darstellung, keine amtliche Vermessung.
+    Wassertemperatur: <a href="https://www.appa.provincia.tn.it" target="_blank" rel="noopener">APPA Trento</a> ·
+    Gardasee-Kontur: vereinfachte, künstlerische Darstellung, keine amtliche Vermessung.
   Alle Werte sind automatisch veröffentlicht und nicht validiert – sie können sich nachträglich noch ändern.<br>
   † Normalstand (langjähriges Mittel): ca. +106 cm, recherchierter Anhaltswert nach <a href="https://www.gardanotizie.it" target="_blank" rel="noopener">gardanotizie.it</a>, keine amtliche Langzeitstatistik – wird bei besser belegter Quelle angepasst.
   <p class="it" style="margin:.6rem 0 0">
     Livello del lago: <a href="https://www.arpa.veneto.it" target="_blank" rel="noopener">ARPAV</a> (CC BY 4.0), idrometro di Peschiera ·
+    Temperatura dell'acqua: <a href="https://www.appa.provincia.tn.it" target="_blank" rel="noopener">APPA Trento</a> ·
     Sagoma del Lago di Garda: rappresentazione semplificata e artistica, non un rilievo ufficiale.
     Tutti i valori sono pubblicati automaticamente e non validati – possono ancora cambiare.<br>
     † Livello normale (media pluriennale): ca. +106 cm, valore di riferimento ricercato secondo <a href="https://www.gardanotizie.it" target="_blank" rel="noopener">gardanotizie.it</a>, nessuna statistica ufficiale a lungo termine – verrà adeguato con una fonte meglio documentata.
@@ -245,6 +294,17 @@ const CFG = {
     // (alle ~103 Stationen Venetiens) und führte über einen reinen Proxy gelegentlich zu
     // Timeouts. Die Function liest/filtert serverseitig und liefert nur die Garda-Station.
     url: '/.netlify/functions/seepegel-lesen'
+  },
+  // Wassertemperatur: APPA-Trento-Sonde vor Riva del Garda (1 m Tiefe). Die Function liest
+  // den Wert aus dem öffentlichen Google-Sheets-Diagramm der APPA (kein CSV/JSON verfügbar).
+  temp: {
+    url: '/.netlify/functions/wassertemperatur-lesen',
+    // Die Sonde liegt am kühleren Nordende (Riva). Für eine Schätzung am Südsee (Salò)
+    // wird ein fester Aufschlag addiert - Bernhards Vorgabe. Auf der Seite als "ca." und
+    // "Schätzwert für den Südsee" gekennzeichnet; der Messort selbst wird nicht genannt.
+    korrektur: 0.4,             // °C
+    skala: { min:5, max:30 },   // °C, Bereich der Farbskala (Beschriftung im HTML passend halten)
+    altNachStunden: 6           // ältere Messungen werden als "nicht aktuell" markiert
   },
   // Langjähriges Mittel des Pegels Peschiera - ARPAV liefert dafür keine öffentliche
   // Langzeitstatistik, daher von Hand recherchiert (gardanotizie.it) statt live berechnet.
@@ -458,9 +518,57 @@ function zeichnePegelChart(reihe){
 }
 
 /* ------------------------------------------------------------------ *
+ *  Wassertemperatur – APPA Trento, Sonde Riva del Garda
+ *  Eigenständig: ein Fehler hier darf den Seepegel (und dessen Meldungen) nie
+ *  beeinflussen, daher eigener Abruf, eigenes try/catch, keine globale meldung().
+ * ------------------------------------------------------------------ */
+function tempGefuehl(g){
+  if (g < 12) return ['sehr kalt','molto fredda'];
+  if (g < 17) return ['kalt','fredda'];
+  if (g < 20) return ['frisch','fresca'];
+  if (g < 23) return ['angenehm','gradevole'];
+  if (g < 26) return ['warm','calda'];
+  return ['sehr warm','molto calda'];
+}
+
+async function ladeWassertemperatur(){
+  try{
+    const r = await fetch(CFG.temp.url, {cache:'no-store'});
+    const daten = await r.json();
+    if (!r.ok || daten.error || typeof daten.grad !== 'number') throw new Error(daten.error || ('HTTP '+r.status));
+
+    const g = daten.grad + CFG.temp.korrektur;
+    const zeit = new Date(daten.zeit);
+    $('#tempWert').innerHTML = `<small>ca.</small> ${zahl(g,1)}<small>°C</small>`;
+    const [de,it] = tempGefuehl(g);
+    $('#tempGefuehl').innerHTML = `${de} <span class="it">· ${it}</span>`;
+
+    const alt = (Date.now() - zeit.getTime()) > CFG.temp.altNachStunden*3600*1000;
+    $('#tempZeit').innerHTML = `${tag(zeit)}, ${uhr(zeit)}` +
+      (alt ? ' <span class="temp-alt">· nicht aktuell · non aggiornata</span>' : '');
+    $('#tempQuelle').textContent = '';
+
+    try{
+      const {min,max} = CFG.temp.skala;
+      const pct = Math.max(0, Math.min(100, (g-min)/(max-min)*100));
+      const marke = $('#tempMarke');
+      marke.style.display = 'block';
+      requestAnimationFrame(() => requestAnimationFrame(() => { marke.style.left = pct + '%'; }));
+    }catch(eSkala){ console.error('Temperatur-Skala fehlgeschlagen:', eSkala); }
+
+  }catch(e){
+    console.error('Wassertemperatur nicht geladen:', e);
+    $('#tempWert').textContent = '–';
+    $('#tempGefuehl').innerHTML = 'gerade nicht verfügbar <span class="it">· al momento non disponibile</span>';
+    $('#tempQuelle').textContent = 'nicht verfügbar · non disponibile';
+  }
+}
+
+/* ------------------------------------------------------------------ *
  *  Start
  * ------------------------------------------------------------------ */
 ladeSeepegel();
+ladeWassertemperatur();
 </script>
 </body>
 </html>
